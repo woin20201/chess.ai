@@ -38,7 +38,11 @@ h1 {
 
 /* Стили для светлой темы доски (по умолчанию) */
 .board-b72b1 {
-    background-color: #f0d9b5;
+    background-color: #f0d9b5; /* Светлые клетки */
+}
+
+.square-55d63 {
+    background-color: #b58863; /* Тёмные клетки */
 }
 
 /* Фигуры - всегда без изменений */
@@ -102,7 +106,11 @@ body.dark #result {
 
 /* Тёмная тема для ДОСКИ (меняем цвет клеток) */
 body.dark .board-b72b1 {
-    background-color: #5d4037; /* Тёмно-коричневый */
+    background-color: #8d6e63; /* Тёмные клетки в светлой теме */
+}
+
+body.dark .square-55d63 {
+    background-color: #5d4037; /* Светлые клетки в тёмной теме */
 }
 
 /* Сообщения */
