@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Шахматный AI</title>
-    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        /* Светлая тема по умолчанию */
+        /* Основные стили */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
         body {
             font-family: 'Arial', sans-serif;
             background: #f5f5f5;
             color: #333;
-            margin: 0;
-            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 20px;
             transition: background-color 0.3s ease;
         }
         
@@ -31,27 +35,29 @@
             transition: all 0.3s ease;
         }
         
-        /* Тёмная тема */
-        body.dark {
-            background: #121212;
-            color: #e0e0e0;
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
         }
         
-        body.dark .container {
-            background: #1e1e1e;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        /* Контейнер для доски */
+        .board-container {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 100%; /* Сохраняем соотношение сторон */
         }
         
-        /* Стили доски */
         #board {
-            width: 450px;
-            height: 450px;
-            margin: 20px auto;
-            border-radius: 3px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
         
-        /* Цвета клеток в светлой теме */
+        /* Стили для доски */
         .board-b72b1 {
             background-color: #f0d9b5;
         }
@@ -60,16 +66,35 @@
             background-color: #b58863;
         }
         
-        /* Цвета клеток в тёмной теме */
-        body.dark .board-b72b1 {
-            background-color: #8d6e63;
+        /* Стили для точек (возможных ходов) */
+        .possible-move {
+            position: absolute;
+            width: 24%;
+            height: 24%;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.2);
+            margin: 38%;
+            z-index: 2;
+            pointer-events: none;
         }
         
-        body.dark .square-55d63 {
-            background-color: #5d4037;
+        .square-55d63 .possible-move {
+            background: rgba(255, 255, 255, 0.3);
         }
         
-        /* Остальные стили */
+        /* Кнопки */
+        .theme-control {
+            margin: 20px 0;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        
         button {
             padding: 12px 25px;
             background: #3498db;
@@ -87,6 +112,7 @@
             background: #2980b9;
         }
         
+        /* Результаты */
         #result {
             min-height: 60px;
             padding: 15px;
@@ -94,13 +120,71 @@
             border-radius: 8px;
             background: #f8f9fa;
             font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        /* Тёмная тема */
+        body.dark {
+            background: #121212;
+            color: #e0e0e0;
+        }
+        
+        body.dark .container {
+            background: #1e1e1e;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         body.dark #result {
             background: #2a2a2a;
             color: #e0e0e0;
         }
+        
+        body.dark .board-b72b1 {
+            background-color: #8d6e63;
+        }
+        
+        body.dark .square-55d63 {
+            background-color: #5d4037;
+        }
+        
+        /* Сообщения */
+        .checkmate {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .draw {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        
+        .check {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #e74c3c;
+        }
+        
+        .success {
+            color: #2ecc71;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 500px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
 </head>
 <body>
     <div class="container">
@@ -110,7 +194,9 @@
             <button id="theme-btn">🌙 Включить тёмную тему</button>
         </div>
         
-        <div id="board"></div>
+        <div class="board-container">
+            <div id="board"></div>
+        </div>
         
         <div class="controls">
             <button id="analyze-btn">Анализировать позицию</button>
@@ -121,30 +207,44 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
-    
-    <!-- Стабильная версия Stockfish -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js"></script>
     
     <script>
-        // Ждем полной загрузки DOM
+        // Ждем полной загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
             // Инициализация игры
             const game = new Chess();
             let board;
+            let selectedSquare = null;
+            let possibleMoves = [];
             
-            // Инициализация доски после загрузки страницы
+            // Инициализация доски
             function initBoard() {
                 board = Chessboard('board', {
                     position: 'start',
-                    draggable: true,
+                    draggable: true, // Оставляем возможность перетаскивания
                     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-                    onDrop: handleMove
+                    onDrop: handleMove,
+                    onDragStart: onDragStart
+                });
+                
+                // Добавляем обработчик клика для перемещения по точкам
+                $('#board').on('click', '.square-55d63', function() {
+                    const square = $(this).data('square');
+                    handleSquareClick(square);
                 });
             }
             
-            // Обработка ходов
+            // Обработка начала перетаскивания
+            function onDragStart(source, piece) {
+                // Разрешаем перетаскивание только своих фигур
+                return (game.turn() === 'w' && piece.search(/^w/) !== -1) ||
+                       (game.turn() === 'b' && piece.search(/^b/) !== -1);
+            }
+            
+            // Обработка перемещения фигуры
             function handleMove(source, target) {
                 const move = game.move({
                     from: source,
@@ -153,8 +253,174 @@
                 });
                 
                 if (move === null) return 'snapback';
+                
+                // Скрываем точки после хода
+                clearPossibleMoves();
                 updateStatus();
             }
+            
+            // Обработка клика на клетку (для перемещения по точкам)
+            function handleSquareClick(square) {
+                // Если уже выбрана фигура
+                if (selectedSquare) {
+                    // Проверяем, является ли клик на возможный ход
+                    const move = possibleMoves.find(m => m.to === square);
+                    if (move) {
+                        // Выполняем ход
+                        game.move(move);
+                        board.position(game.fen());
+                        
+                        // Скрываем точки после хода
+                        clearPossibleMoves();
+                        updateStatus();
+                    } else {
+                        // Если клик не на возможный ход, сбрасываем выбор
+                        clearPossibleMoves();
+                        
+                        // Если кликнули на свою фигуру, выбираем ее
+                        const piece = game.get(square);
+                        if (piece && piece.color === game.turn()) {
+                            selectPiece(square);
+                        }
+                    }
+                } else {
+                    // Если фигура еще не выбрана, выбираем ее
+                    const piece = game.get(square);
+                    if (piece && piece.color === game.turn()) {
+                        selectPiece(square);
+                    }
+                }
+            }
+            
+            // Выбор фигуры и показ возможных ходов
+            function selectPiece(square) {
+                selectedSquare = square;
+                
+                // Получаем все возможные ходы для этой фигуры
+                possibleMoves = game.moves({
+                    square: square,
+                    verbose: true
+                });
+                
+                // Показываем точки для возможных ходов
+                showPossibleMoves(possibleMoves);
+            }
+            
+            // Показать точки возможных ходов
+            function showPossibleMoves(moves) {
+                // Сначала очищаем предыдущие точки
+                clearPossibleMoves();
+                
+                // Добавляем новые точки
+                moves.forEach(move => {
+                    const $square = $(`#board .square-${move.to}`);
+                    if ($square.length) {
+                        $square.append('<div class="possible-move"></div>');
+                    }
+                });
+            }
+            
+            // Очистить все точки возможных ходов
+            function clearPossibleMoves() {
+                $('#board .possible-move').remove();
+                selectedSquare = null;
+                possibleMoves = [];
+            }
+            
+            // Анализ позиции с Stockfish
+            document.getElementById('analyze-btn').addEventListener('click', function() {
+                if (game.game_over()) {
+                    showResult('Игра окончена! Начните новую.', 'error');
+                    return;
+                }
+                
+                showResult('Анализ Stockfish... (10-20 секунд)', 'info');
+                
+                try {
+                    const stockfish = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+                    
+                    let evaluation = "0.0";
+                    let bestMove = null;
+                    let isAnalysisComplete = false;
+                    
+                    const analysisTimer = setTimeout(() => {
+                        if (!isAnalysisComplete) {
+                            showResult('Анализ занял слишком много времени. Попробуйте ещё раз.', 'warning');
+                            stockfish.terminate();
+                        }
+                    }, 30000);
+                    
+                    stockfish.onmessage = function(event) {
+                        const data = event.data;
+                        
+                        // Парсим оценку позиции
+                        if (data.includes('score cp')) {
+                            const match = data.match(/score cp (-?\d+)/);
+                            if (match) {
+                                const score = parseInt(match[1]) / 100;
+                                evaluation = score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1);
+                            }
+                        }
+                        // Обработка мата
+                        else if (data.includes('score mate')) {
+                            const match = data.match(/score mate (-?\d+)/);
+                            if (match) {
+                                const moves = Math.abs(parseInt(match[1]));
+                                evaluation = match[1] > 0 
+                                    ? `Мат белым в ${moves} ходов` 
+                                    : `Мат чёрным в ${moves} ходов`;
+                            }
+                        }
+                        // Лучший ход
+                        else if (data.startsWith('bestmove')) {
+                            isAnalysisComplete = true;
+                            clearTimeout(analysisTimer);
+                            
+                            bestMove = data.split(' ')[1];
+                            
+                            if (bestMove && bestMove !== '(none)') {
+                                showResult(`
+                                    <p><strong>Лучший ход:</strong> ${bestMove}</p>
+                                    <p><strong>Оценка позиции:</strong> ${evaluation}</p>
+                                    <button id="apply-move-btn" class="apply-btn">Сделать этот ход</button>
+                                `);
+                                
+                                document.getElementById('apply-move-btn').addEventListener('click', () => {
+                                    game.move({
+                                        from: bestMove.substring(0, 2),
+                                        to: bestMove.substring(2, 4),
+                                        promotion: 'q'
+                                    });
+                                    board.position(game.fen());
+                                    updateStatus();
+                                });
+                            } else {
+                                showResult('Лучший ход не найден', 'warning');
+                            }
+                            
+                            stockfish.terminate();
+                        }
+                    };
+                    
+                    // Последовательность команд для Stockfish
+                    stockfish.postMessage('uci');
+                    stockfish.postMessage('isready');
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage('go depth 14');
+                    
+                } catch (error) {
+                    showResult(`Ошибка: ${error.message}`, 'error');
+                    console.error('Stockfish error:', error);
+                }
+            });
+            
+            // Сброс доски
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                game.reset();
+                board.position('start');
+                clearPossibleMoves();
+                document.getElementById('result').innerHTML = '';
+            });
             
             // Переключение темы
             document.getElementById('theme-btn').addEventListener('click', function() {
@@ -162,32 +428,57 @@
                 this.textContent = document.body.classList.contains('dark') 
                     ? '☀️ Включить светлую тему' 
                     : '🌙 Включить тёмную тему';
+            });
+            
+            // Обновление статуса игры
+            function updateStatus() {
+                if (game.in_checkmate()) {
+                    showResult('Шах и мат!', 'checkmate');
+                } else if (game.in_draw()) {
+                    showResult('Ничья!', 'draw');
+                } else if (game.in_check()) {
+                    showResult('Шах!', 'check');
+                } else {
+                    document.getElementById('result').innerHTML = '';
+                }
+            }
+            
+            // Показать результат анализа
+            function showResult(message, type = 'info') {
+                const resultDiv = document.getElementById('result');
                 
-                // Перезагружаем доску для применения новых цветов
-                board.destroy();
-                initBoard();
-            });
-            
-            // Анализ позиции
-            document.getElementById('analyze-btn').addEventListener('click', function() {
-                // ... (код анализа из предыдущего примера) ...
-            });
-            
-            // Сброс доски
-            document.getElementById('reset-btn').addEventListener('click', function() {
-                game.reset();
-                board.position('start');
-                document.getElementById('result').innerHTML = '';
-            });
-            
-            // Инициализация при загрузке
-            initBoard();
+                switch(type) {
+                    case 'error':
+                        resultDiv.innerHTML = `<p class="error">${message}</p>`;
+                        break;
+                    case 'warning':
+                        resultDiv.innerHTML = `<p class="warning">${message}</p>`;
+                        break;
+                    case 'checkmate':
+                        resultDiv.innerHTML = `<p class="checkmate">${message}</p>`;
+                        break;
+                    case 'draw':
+                        resultDiv.innerHTML = `<p class="draw">${message}</p>`;
+                        break;
+                    case 'check':
+                        resultDiv.innerHTML = `<p class="check">${message}</p>`;
+                        break;
+                    case 'info':
+                        resultDiv.innerHTML = `<p>${message}</p>`;
+                        break;
+                    default:
+                        resultDiv.innerHTML = message;
+                }
+            }
             
             // Проверка системной темы
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 document.body.classList.add('dark');
                 document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
             }
+            
+            // Инициализация доски
+            initBoard();
         });
     </script>
 </body>
