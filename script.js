@@ -19,23 +19,18 @@ function handleMove(source, target) {
     updateStatus();
 }
 
-// Анализ позиции с Stockfish (исправленная версия)
-document.getElementById('analyze-btn').addEventListener('click', async () => {
+// Анализ позиции с Stockfish 17 (официальная реализация)
+document.getElementById('analyze-btn').addEventListener('click', () => {
     if (game.game_over()) {
         showResult('Игра окончена! Начните новую.', 'error');
         return;
     }
     
-    showResult('Анализ Stockfish 10... (10-20 секунд)', 'info');
+    showResult('Анализ Stockfish 17... (10-20 секунд)', 'info');
     
     try {
-        // Проверяем доступность Stockfish
-        if (typeof Stockfish === 'undefined') {
-            throw new Error('Stockfish engine not loaded');
-        }
-        
-        // Инициализация Stockfish
-        const stockfish = await Stockfish();
+        // Создаем Web Worker для Stockfish
+        const stockfish = new Worker('https://stockfishchess.org/js/stockfish.js');
         let evaluation = "0.0";
         let bestMove = null;
         let isAnalysisComplete = false;
@@ -49,7 +44,7 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         }, 30000);
         
         // Обработчик сообщений от Stockfish
-        stockfish.onmessage = (event) => {
+        stockfish.onmessage = function(event) {
             const data = event.data;
             
             // Парсим оценку позиции
@@ -101,10 +96,10 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         stockfish.postMessage('uci');
         stockfish.postMessage('isready');
         stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage('go depth 14');
+        stockfish.postMessage('go depth 16');
         
     } catch (error) {
-        showResult(`Ошибка: ${error.message}. Попробуйте обновить страницу.`, 'error');
+        showResult(`Ошибка загрузки Stockfish: ${error.message}`, 'error');
         console.error('Stockfish error:', error);
     }
 });
@@ -174,9 +169,9 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
     }
     
-    // Проверка поддержки WebAssembly
-    if (!window.WebAssembly) {
-        showResult('Ваш браузер не поддерживает WebAssembly. Обновите браузер.', 'error');
+    // Проверка поддержки Web Workers
+    if (!window.Worker) {
+        showResult('Ваш браузер не поддерживает Web Workers. Обновите браузер.', 'error');
         document.getElementById('analyze-btn').disabled = true;
     }
 });
