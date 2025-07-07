@@ -19,16 +19,21 @@ function handleMove(source, target) {
     updateStatus();
 }
 
-// Анализ позиции с Stockfish
+// Анализ позиции с Stockfish (исправленная версия)
 document.getElementById('analyze-btn').addEventListener('click', async () => {
     if (game.game_over()) {
         showResult('Игра окончена! Начните новую.', 'error');
         return;
     }
     
-    showResult('Анализ Stockfish 17... (10-20 секунд)', 'info');
+    showResult('Анализ Stockfish 10... (10-20 секунд)', 'info');
     
     try {
+        // Проверяем доступность Stockfish
+        if (typeof Stockfish === 'undefined') {
+            throw new Error('Stockfish engine not loaded');
+        }
+        
         // Инициализация Stockfish
         const stockfish = await Stockfish();
         let evaluation = "0.0";
@@ -96,10 +101,10 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         stockfish.postMessage('uci');
         stockfish.postMessage('isready');
         stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage('go depth 16');
+        stockfish.postMessage('go depth 14');
         
     } catch (error) {
-        showResult(`Ошибка загрузки Stockfish: ${error.message}`, 'error');
+        showResult(`Ошибка: ${error.message}. Попробуйте обновить страницу.`, 'error');
         console.error('Stockfish error:', error);
     }
 });
@@ -170,7 +175,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     
     // Проверка поддержки WebAssembly
-    if (!WebAssembly) {
+    if (!window.WebAssembly) {
         showResult('Ваш браузер не поддерживает WebAssembly. Обновите браузер.', 'error');
         document.getElementById('analyze-btn').disabled = true;
     }
