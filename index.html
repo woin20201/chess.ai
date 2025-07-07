@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Шахматный AI</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
         /* Основные стили */
         * {
@@ -42,57 +43,23 @@
         
         /* Контейнер для доски */
         .board-container {
-            position: relative;
-            width: 100%;
-            max-width: 480px;
+            width: 480px;
+            height: 480px;
             margin: 0 auto;
-            padding-bottom: 100%; /* Сохраняем соотношение сторон */
         }
         
         #board {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
         }
         
         /* Стили для доски */
-        .chessboard {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-wrap: wrap;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        
-        .square {
-            width: 12.5%;
-            height: 12.5%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
-        }
-        
-        .square.light {
+        .board-b72b1 {
             background-color: #f0d9b5;
         }
         
-        .square.dark {
+        .square-55d63 {
             background-color: #b58863;
-        }
-        
-        .piece {
-            width: 90%;
-            height: 90%;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            z-index: 2;
         }
         
         /* Стили для точек (возможных ходов) */
@@ -103,9 +70,10 @@
             border-radius: 50%;
             background: rgba(0, 0, 0, 0.2);
             z-index: 1;
+            margin: 38%;
         }
         
-        .square.dark .possible-move {
+        .square-55d63 .possible-move {
             background: rgba(255, 255, 255, 0.3);
         }
         
@@ -166,11 +134,11 @@
             color: #e0e0e0;
         }
         
-        body.dark .square.light {
+        body.dark .board-b72b1 {
             background-color: #8d6e63;
         }
         
-        body.dark .square.dark {
+        body.dark .square-55d63 {
             background-color: #5d4037;
         }
         
@@ -200,6 +168,11 @@
         
         /* Адаптивность */
         @media (max-width: 500px) {
+            .board-container {
+                width: 90vw;
+                height: 90vw;
+            }
+            
             .controls {
                 flex-direction: column;
                 align-items: center;
@@ -221,7 +194,7 @@
         </div>
         
         <div class="board-container">
-            <div id="board" class="chessboard"></div>
+            <div id="board"></div>
         </div>
         
         <div class="controls">
@@ -232,210 +205,131 @@
         <div id="result"></div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+    
     <script>
         // Ждем полной загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
-            // Шахматная доска
-            const boardElement = document.getElementById('board');
-            const files = 'abcdefgh';
-            const ranks = '87654321';
+            // Инициализация игры
+            const game = new Chess();
+            let board;
             let selectedSquare = null;
             let possibleMoves = [];
             
             // Инициализация доски
             function initBoard() {
-                boardElement.innerHTML = '';
+                board = Chessboard('board', {
+                    position: 'start',
+                    draggable: true,
+                    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                    onDrop: handleMove,
+                    onDragStart: onDragStart
+                });
                 
-                for (let rank = 0; rank < 8; rank++) {
-                    for (let file = 0; file < 8; file++) {
-                        const square = document.createElement('div');
-                        square.className = `square ${(rank + file) % 2 === 0 ? 'light' : 'dark'}`;
-                        square.dataset.square = `${files[file]}${ranks[rank]}`;
-                        square.addEventListener('click', handleSquareClick);
-                        boardElement.appendChild(square);
-                    }
-                }
-                
-                setInitialPosition();
+                // Обработчик клика для перемещения по точкам
+                $('#board').on('click', '.square-55d63', function() {
+                    const square = $(this).data('square');
+                    handleSquareClick(square);
+                });
             }
             
-            // Установка начальной позиции
-            function setInitialPosition() {
-                // Пешки
-                for (let file = 0; file < 8; file++) {
-                    setPiece(`${files[file]}7`, 'bP');
-                    setPiece(`${files[file]}2`, 'wP');
-                }
-                
-                // Ладьи
-                setPiece('a8', 'bR');
-                setPiece('h8', 'bR');
-                setPiece('a1', 'wR');
-                setPiece('h1', 'wR');
-                
-                // Кони
-                setPiece('b8', 'bN');
-                setPiece('g8', 'bN');
-                setPiece('b1', 'wN');
-                setPiece('g1', 'wN');
-                
-                // Слоны
-                setPiece('c8', 'bB');
-                setPiece('f8', 'bB');
-                setPiece('c1', 'wB');
-                setPiece('f1', 'wB');
-                
-                // Ферзи
-                setPiece('d8', 'bQ');
-                setPiece('d1', 'wQ');
-                
-                // Короли
-                setPiece('e8', 'bK');
-                setPiece('e1', 'wK');
+            // Обработка начала перетаскивания
+            function onDragStart(source, piece) {
+                // Разрешаем перетаскивание только своих фигур
+                return (game.turn() === 'w' && piece.search(/^w/) !== -1) ||
+                       (game.turn() === 'b' && piece.search(/^b/) !== -1);
             }
             
-            // Установка фигуры на поле
-            function setPiece(square, piece) {
-                const element = document.querySelector(`.square[data-square="${square}"]`);
-                if (!element) return;
+            // Обработка перемещения фигуры
+            function handleMove(source, target) {
+                const move = game.move({
+                    from: source,
+                    to: target,
+                    promotion: 'q'
+                });
                 
-                const pieceElement = document.createElement('div');
-                pieceElement.className = 'piece';
-                pieceElement.style.backgroundImage = `url('https://chessboardjs.com/img/chesspieces/wikipedia/${piece}.png')`;
-                pieceElement.dataset.piece = piece;
-                element.appendChild(pieceElement);
+                if (move === null) return 'snapback';
+                
+                // Скрываем точки после хода
+                clearPossibleMoves();
+                updateStatus();
             }
             
-            // Обработка клика на поле
-            function handleSquareClick(event) {
-                const square = event.currentTarget.dataset.square;
-                const piece = event.currentTarget.querySelector('.piece')?.dataset.piece;
-                
-                // Если фигура уже выбрана
+            // Обработка клика на клетку (для перемещения по точкам)
+            function handleSquareClick(square) {
+                // Если уже выбрана фигура
                 if (selectedSquare) {
                     // Проверяем, является ли клик на возможный ход
                     const move = possibleMoves.find(m => m.to === square);
                     if (move) {
                         // Выполняем ход
-                        movePiece(selectedSquare, square);
+                        game.move(move);
+                        board.position(game.fen());
+                        
+                        // Скрываем точки после хода
                         clearPossibleMoves();
+                        updateStatus();
                     } else {
-                        // Сбрасываем выбор
+                        // Если клик не на возможный ход, сбрасываем выбор
                         clearPossibleMoves();
                         
                         // Если кликнули на свою фигуру, выбираем ее
-                        if (piece && piece[0] === (currentPlayer === 'white' ? 'w' : 'b')) {
-                            selectPiece(square, piece);
+                        const piece = game.get(square);
+                        if (piece && piece.color === game.turn()) {
+                            selectPiece(square);
                         }
                     }
                 } else {
                     // Если фигура еще не выбрана, выбираем ее
-                    if (piece && piece[0] === (currentPlayer === 'white' ? 'w' : 'b')) {
-                        selectPiece(square, piece);
+                    const piece = game.get(square);
+                    if (piece && piece.color === game.turn()) {
+                        selectPiece(square);
                     }
                 }
             }
             
-            // Выбор фигуры
-            function selectPiece(square, piece) {
+            // Выбор фигуры и показ возможных ходов
+            function selectPiece(square) {
                 selectedSquare = square;
                 
-                // Получаем возможные ходы (упрощенная версия)
-                possibleMoves = getPossibleMoves(square, piece);
+                // Получаем все возможные ходы для этой фигуры
+                possibleMoves = game.moves({
+                    square: square,
+                    verbose: true
+                });
+                
+                // Фильтруем ходы - нельзя съедать свои фигуры
+                possibleMoves = possibleMoves.filter(move => {
+                    const targetPiece = game.get(move.to);
+                    return !targetPiece || targetPiece.color !== game.turn();
+                });
                 
                 // Показываем точки для возможных ходов
                 showPossibleMoves(possibleMoves);
             }
             
-            // Получение возможных ходов (упрощенная реализация)
-            function getPossibleMoves(square, piece) {
-                const moves = [];
-                const [file, rank] = square.split('');
-                const rankIndex = ranks.indexOf(rank);
-                const fileIndex = files.indexOf(file);
-                
-                // Для пешки (упрощенно)
-                if (piece[1] === 'P') {
-                    const direction = piece[0] === 'w' ? -1 : 1;
-                    
-                    // Ход на одну клетку
-                    const newRank = ranks[rankIndex + direction];
-                    if (newRank) {
-                        moves.push({ from: square, to: `${file}${newRank}` });
-                        
-                        // Первый ход на две клетки
-                        if ((piece[0] === 'w' && rank === '2') || (piece[0] === 'b' && rank === '7')) {
-                            moves.push({ from: square, to: `${file}${ranks[rankIndex + 2 * direction]}` });
-                        }
-                    }
-                }
-                
-                // Для ладьи (упрощенно)
-                if (piece[1] === 'R') {
-                    // Горизонтальные и вертикальные ходы
-                    for (let i = 0; i < 8; i++) {
-                        if (i !== rankIndex) moves.push({ from: square, to: `${file}${ranks[i]}` });
-                        if (i !== fileIndex) moves.push({ from: square, to: `${files[i]}${rank}` });
-                    }
-                }
-                
-                return moves;
-            }
-            
             // Показать точки возможных ходов
             function showPossibleMoves(moves) {
+                // Сначала очищаем предыдущие точки
+                clearPossibleMoves();
+                
+                // Добавляем новые точки
                 moves.forEach(move => {
-                    const element = document.querySelector(`.square[data-square="${move.to}"]`);
-                    if (element) {
-                        const dot = document.createElement('div');
-                        dot.className = 'possible-move';
-                        element.appendChild(dot);
+                    const $square = $(`#board .square-${move.to}`);
+                    if ($square.length) {
+                        $square.append('<div class="possible-move"></div>');
                     }
                 });
             }
             
             // Очистить все точки возможных ходов
             function clearPossibleMoves() {
-                document.querySelectorAll('.possible-move').forEach(dot => dot.remove());
+                $('#board .possible-move').remove();
                 selectedSquare = null;
                 possibleMoves = [];
             }
-            
-            // Перемещение фигуры
-            function movePiece(from, to) {
-                const fromElement = document.querySelector(`.square[data-square="${from}"]`);
-                const piece = fromElement.querySelector('.piece');
-                
-                if (!piece) return;
-                
-                const toElement = document.querySelector(`.square[data-square="${to}"]`);
-                
-                // Удаляем фигуру на конечной клетке (если есть)
-                if (toElement.querySelector('.piece')) {
-                    toElement.querySelector('.piece').remove();
-                }
-                
-                // Перемещаем фигуру
-                toElement.appendChild(piece);
-                
-                // Меняем игрока
-                currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
-            }
-            
-            // Переключение темы
-            document.getElementById('theme-btn').addEventListener('click', function() {
-                document.body.classList.toggle('dark');
-                this.textContent = document.body.classList.contains('dark') 
-                    ? '☀️ Включить светлую тему' 
-                    : '🌙 Включить тёмную тему';
-            });
-            
-            // Сброс доски
-            document.getElementById('reset-btn').addEventListener('click', function() {
-                initBoard();
-                currentPlayer = 'white';
-                document.getElementById('result').innerHTML = '';
-            });
             
             // Stockfish Worker (локальная реализация)
             class StockfishWorker {
@@ -482,11 +376,18 @@
             
             // Анализ позиции
             document.getElementById('analyze-btn').addEventListener('click', function() {
+                if (game.game_over()) {
+                    showResult('Игра окончена! Начните новую.', 'error');
+                    return;
+                }
+                
                 showResult('Анализ Stockfish...', 'info');
                 
                 try {
-                    // Используем локальную реализацию Stockfish
                     const stockfish = new StockfishWorker();
+                    
+                    let evaluation = "0.0";
+                    let bestMove = null;
                     
                     stockfish.onmessage = function(event) {
                         const data = typeof event === 'string' ? event : event.data;
@@ -501,7 +402,13 @@
                                 `);
                                 
                                 document.getElementById('apply-move-btn')?.addEventListener('click', () => {
-                                    movePiece(bestMove.substring(0, 2), bestMove.substring(2, 4));
+                                    game.move({
+                                        from: bestMove.substring(0, 2),
+                                        to: bestMove.substring(2, 4),
+                                        promotion: 'q'
+                                    });
+                                    board.position(game.fen());
+                                    updateStatus();
                                 });
                             }
                         }
@@ -510,7 +417,7 @@
                     // Последовательность команд для Stockfish
                     stockfish.postMessage('uci');
                     stockfish.postMessage('isready');
-                    stockfish.postMessage('position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+                    stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage('go depth 10');
                     
                 } catch (error) {
@@ -519,6 +426,35 @@
                 }
             });
             
+            // Сброс доски
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                game.reset();
+                board.position('start');
+                clearPossibleMoves();
+                document.getElementById('result').innerHTML = '';
+            });
+            
+            // Переключение темы
+            document.getElementById('theme-btn').addEventListener('click', function() {
+                document.body.classList.toggle('dark');
+                this.textContent = document.body.classList.contains('dark') 
+                    ? '☀️ Включить светлую тему' 
+                    : '🌙 Включить тёмную тему';
+            });
+            
+            // Обновление статуса игры
+            function updateStatus() {
+                if (game.in_checkmate()) {
+                    showResult('Шах и мат!', 'checkmate');
+                } else if (game.in_draw()) {
+                    showResult('Ничья!', 'draw');
+                } else if (game.in_check()) {
+                    showResult('Шах!', 'check');
+                } else {
+                    document.getElementById('result').innerHTML = '';
+                }
+            }
+            
             // Показать результат анализа
             function showResult(message, type = 'info') {
                 const resultDiv = document.getElementById('result');
@@ -526,6 +462,15 @@
                 switch(type) {
                     case 'error':
                         resultDiv.innerHTML = `<p class="error">${message}</p>`;
+                        break;
+                    case 'checkmate':
+                        resultDiv.innerHTML = `<p class="checkmate">${message}</p>`;
+                        break;
+                    case 'draw':
+                        resultDiv.innerHTML = `<p class="draw">${message}</p>`;
+                        break;
+                    case 'check':
+                        resultDiv.innerHTML = `<p class="check">${message}</p>`;
                         break;
                     case 'info':
                         resultDiv.innerHTML = `<p>${message}</p>`;
@@ -542,7 +487,6 @@
             }
             
             // Инициализация доски
-            let currentPlayer = 'white';
             initBoard();
         });
     </script>
