@@ -6,42 +6,41 @@ const board = Chessboard('board', {
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
 });
 
-// Анализ позиции
+// Анализ позиции (исправленная версия)
 document.getElementById('analyze-btn').addEventListener('click', async () => {
-    if (game.game_over()) {
-        alert("Игра окончена! Начните новую.");
-        return;
-    }
-
     const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = "<p>Анализ... (ждём 5-10 секунд)</p>";
-
-    // Используем Stockfish через CDN
-    const stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10/stockfish.js');
-
-    stockfish.onmessage = (e) => {
-        if (e.data.startsWith('bestmove')) {
-            const bestMove = e.data.split(' ')[1];
-            if (bestMove && bestMove !== '(none)') {
-                game.move(bestMove);
-                board.position(game.fen());
-                resultDiv.innerHTML = `
-                    <p>Лучший ход: <strong>${bestMove}</strong></p>
-                    <p>Оценка: ${getEvaluation(e.data)}</p>
-                `;
-            } else {
-                resultDiv.innerHTML = "<p>AI не нашёл ходов (возможно, мат или пат).</p>";
+    resultDiv.innerHTML = "<p>Анализ... (это займёт 10-15 секунд)</p>";
+    
+    try {
+        // Альтернативный CDN для Stockfish
+        const stockfish = new Worker('https://unpkg.com/stockfish.js@10.0.2/src/stockfish.js');
+        
+        stockfish.onmessage = (e) => {
+            if (e.data.startsWith('bestmove')) {
+                const bestMove = e.data.split(' ')[1];
+                if (bestMove && bestMove !== '(none)') {
+                    game.move(bestMove);
+                    board.position(game.fen());
+                    const evalScore = extractEvaluation(e.data);
+                    resultDiv.innerHTML = `
+                        <p>Лучший ход: <strong>${bestMove}</strong></p>
+                        <p>Оценка: ${evalScore}</p>
+                    `;
+                }
+                stockfish.terminate();
             }
-            stockfish.terminate();
-        }
-    };
-
-    stockfish.postMessage(`position fen ${game.fen()}`);
-    stockfish.postMessage('go depth 18'); // Глубина анализа (больше = точнее, но медленнее)
+        };
+        
+        stockfish.postMessage(`position fen ${game.fen()}`);
+        stockfish.postMessage('go depth 16');
+    } catch (error) {
+        resultDiv.innerHTML = "<p>Ошибка загрузки AI. Обновите страницу.</p>";
+        console.error("Stockfish error:", error);
+    }
 });
 
-// Функция для извлечения оценки из вывода Stockfish
-function getEvaluation(output) {
+// Извлечение оценки
+function extractEvaluation(output) {
     const score = output.match(/score cp (-?\d+)/);
     if (score) {
         const value = parseInt(score[1]) / 100;
@@ -49,10 +48,3 @@ function getEvaluation(output) {
     }
     return "N/A";
 }
-
-// Сброс доски
-document.getElementById('reset-btn').addEventListener('click', () => {
-    game.reset();
-    board.start();
-    document.getElementById('result').innerHTML = '';
-});
