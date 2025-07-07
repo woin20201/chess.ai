@@ -19,14 +19,14 @@ function handleMove(source, target) {
     updateStatus();
 }
 
-// Анализ позиции с локальным Stockfish
+// Анализ позиции с Stockfish
 document.getElementById('analyze-btn').addEventListener('click', async () => {
     if (game.game_over()) {
         showResult('Игра окончена! Начните новую.', 'error');
         return;
     }
     
-    showResult('Анализ Stockfish... (10-20 секунд)', 'info');
+    showResult('Анализ Stockfish 17... (10-20 секунд)', 'info');
     
     try {
         // Инициализация Stockfish
@@ -111,7 +111,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     document.getElementById('result').innerHTML = '';
 });
 
-// Переключение темы (меняет ТОЛЬКО фон)
+// Переключение темы (меняет фон страницы и цвет доски)
 document.getElementById('theme-btn').addEventListener('click', () => {
     document.body.classList.toggle('dark');
     const themeBtn = document.getElementById('theme-btn');
