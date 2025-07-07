@@ -19,23 +19,21 @@ function handleMove(source, target) {
     updateStatus();
 }
 
-// Анализ позиции с Stockfish 17 (официальная реализация)
+// Анализ позиции с Stockfish
 document.getElementById('analyze-btn').addEventListener('click', () => {
     if (game.game_over()) {
         showResult('Игра окончена! Начните новую.', 'error');
         return;
     }
     
-    showResult('Анализ Stockfish 17... (10-20 секунд)', 'info');
+    showResult('Анализ Stockfish... (10-20 секунд)', 'info');
     
     try {
-        // Создаем Web Worker для Stockfish
-        const stockfish = new Worker('https://stockfishchess.org/js/stockfish.js');
+        const stockfish = new Worker('https://unpkg.com/stockfish.js@14.1.0/stockfish.js');
         let evaluation = "0.0";
         let bestMove = null;
         let isAnalysisComplete = false;
         
-        // Таймер для отслеживания времени выполнения
         const analysisTimer = setTimeout(() => {
             if (!isAnalysisComplete) {
                 showResult('Анализ занял слишком много времени. Попробуйте ещё раз.', 'warning');
@@ -43,11 +41,9 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
             }
         }, 30000);
         
-        // Обработчик сообщений от Stockfish
         stockfish.onmessage = function(event) {
             const data = event.data;
             
-            // Парсим оценку позиции
             if (data.includes('score cp')) {
                 const match = data.match(/score cp (-?\d+)/);
                 if (match) {
@@ -55,7 +51,6 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
                     evaluation = score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1);
                 }
             }
-            // Обработка мата
             else if (data.includes('score mate')) {
                 const match = data.match(/score mate (-?\d+)/);
                 if (match) {
@@ -65,7 +60,6 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
                         : `Мат чёрным в ${moves} ходов`;
                 }
             }
-            // Лучший ход
             else if (data.startsWith('bestmove')) {
                 isAnalysisComplete = true;
                 clearTimeout(analysisTimer);
@@ -80,7 +74,10 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
                     `);
                     
                     document.getElementById('apply-move-btn').addEventListener('click', () => {
-                        game.move(bestMove);
+                        game.move({
+                            from: bestMove.substring(0, 2),
+                            to: bestMove.substring(2, 4)
+                        });
                         board.position(game.fen());
                         updateStatus();
                     });
@@ -92,14 +89,13 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
             }
         };
         
-        // Последовательность команд для Stockfish
         stockfish.postMessage('uci');
         stockfish.postMessage('isready');
         stockfish.postMessage(`position fen ${game.fen()}`);
         stockfish.postMessage('go depth 16');
         
     } catch (error) {
-        showResult(`Ошибка загрузки Stockfish: ${error.message}`, 'error');
+        showResult(`Ошибка: ${error.message}`, 'error');
         console.error('Stockfish error:', error);
     }
 });
@@ -111,7 +107,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     document.getElementById('result').innerHTML = '';
 });
 
-// Переключение темы (меняет фон страницы и цвет доски)
+// Переключение темы
 document.getElementById('theme-btn').addEventListener('click', () => {
     document.body.classList.toggle('dark');
     const themeBtn = document.getElementById('theme-btn');
@@ -163,13 +159,11 @@ function showResult(message, type = 'info') {
 
 // Инициализация при загрузке
 window.addEventListener('DOMContentLoaded', () => {
-    // Определение системной темы
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.body.classList.add('dark');
         document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
     }
     
-    // Проверка поддержки Web Workers
     if (!window.Worker) {
         showResult('Ваш браузер не поддерживает Web Workers. Обновите браузер.', 'error');
         document.getElementById('analyze-btn').disabled = true;
