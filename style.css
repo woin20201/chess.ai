@@ -31,3 +31,36 @@ button {
 button:hover {
     background: #45a049;
 }
+/* Тёмная тема */
+body.dark {
+    background: #121212;
+    color: #e0e0e0;
+}
+
+body.dark .container {
+    background: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+body.dark button {
+    background: #333;
+    color: #fff;
+}
+
+body.dark #board {
+    filter: invert(0.9);
+}
+
+/* Переключатель темы */
+.theme-switcher {
+    text-align: center;
+    margin: 15px 0;
+}
+
+#theme-btn {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+}
