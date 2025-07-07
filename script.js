@@ -1,30 +1,46 @@
-// Инициализация
+// Инициализация игры и доски
 const game = new Chess();
 const board = Chessboard('board', {
     position: 'start',
     draggable: true,
-    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+    onDrop: handleMove
 });
 
-// Анализ позиции (исправленная версия)
-document.getElementById('analyze-btn').addEventListener('click', async () => {
+// Обработка ходов
+function handleMove(source, target) {
+    const move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q'
+    });
+    
+    if (move === null) return 'snapback';
+    updateStatus();
+}
+
+// Анализ позиции
+document.getElementById('analyze-btn').addEventListener('click', () => {
+    if (game.game_over()) {
+        alert('Игра окончена! Начните новую.');
+        return;
+    }
+    
     const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = "<p>Анализ... (это займёт 10-15 секунд)</p>";
+    resultDiv.innerHTML = '<p>Анализ... (это займёт 10-20 секунд)</p>';
     
     try {
-        // Альтернативный CDN для Stockfish
         const stockfish = new Worker('https://unpkg.com/stockfish.js@10.0.2/src/stockfish.js');
         
-        stockfish.onmessage = (e) => {
+        stockfish.onmessage = function(e) {
             if (e.data.startsWith('bestmove')) {
                 const bestMove = e.data.split(' ')[1];
                 if (bestMove && bestMove !== '(none)') {
                     game.move(bestMove);
                     board.position(game.fen());
-                    const evalScore = extractEvaluation(e.data);
                     resultDiv.innerHTML = `
                         <p>Лучший ход: <strong>${bestMove}</strong></p>
-                        <p>Оценка: ${evalScore}</p>
+                        <p>Оценка позиции: ${getEvaluation(e.data)}</p>
                     `;
                 }
                 stockfish.terminate();
@@ -34,13 +50,13 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         stockfish.postMessage(`position fen ${game.fen()}`);
         stockfish.postMessage('go depth 16');
     } catch (error) {
-        resultDiv.innerHTML = "<p>Ошибка загрузки AI. Обновите страницу.</p>";
-        console.error("Stockfish error:", error);
+        document.getElementById('result').innerHTML = '<p>Ошибка загрузки движка. Попробуйте позже.</p>';
+        console.error('Stockfish error:', error);
     }
 });
 
-// Извлечение оценки
-function extractEvaluation(output) {
+// Функция для получения оценки
+function getEvaluation(output) {
     const score = output.match(/score cp (-?\d+)/);
     if (score) {
         const value = parseInt(score[1]) / 100;
@@ -48,9 +64,28 @@ function extractEvaluation(output) {
     }
     return "N/A";
 }
+
+// Сброс доски
+document.getElementById('reset-btn').addEventListener('click', () => {
+    game.reset();
+    board.start();
+    document.getElementById('result').innerHTML = '';
+});
+
 // Переключение темы
 document.getElementById('theme-btn').addEventListener('click', () => {
     document.body.classList.toggle('dark');
-    const btn = document.getElementById('theme-btn');
-    btn.textContent = document.body.classList.contains('dark') ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+    const themeBtn = document.getElementById('theme-btn');
+    themeBtn.textContent = document.body.classList.contains('dark') 
+        ? '☀️ Включить светлую тему' 
+        : '🌙 Включить тёмную тему';
+    
+    // Обновляем доску для применения фильтров
+    board.position(game.fen());
 });
+
+// Обновление статуса игры
+function updateStatus() {
+    if (game.in_checkmate()) alert('Шах и мат!');
+    if (game.in_draw()) alert('Ничья!');
+}
