@@ -29,14 +29,15 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
     const resultDiv = document.getElementById('result');
     resultDiv.innerHTML = '<p>Анализ... (это займёт 10-20 секунд)</p>';
     
-    // Создаем Web Worker для Stockfish
-    const stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10/stockfish.js');
+    // Исправленный URL для Stockfish
+    const stockfish = new Worker('https://unpkg.com/stockfish.js@10/stockfish.js');
     let evaluation = "N/A";
+    let bestMove = null;
     
     stockfish.onmessage = function(event) {
         const data = event.data;
         
-        // Ловим сообщения с оценкой позиции
+        // Парсим оценку позиции
         if (data.includes('score cp')) {
             const match = data.match(/score cp (-?\d+)/);
             if (match) {
@@ -44,22 +45,21 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
                 evaluation = score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1);
             }
         }
-        
-        // Ловим сообщения о мате
+        // Обработка мата
         else if (data.includes('score mate')) {
             const match = data.match(/score mate (-?\d+)/);
             if (match) {
                 const moves = Math.abs(parseInt(match[1]));
-                evaluation = match[1] > 0 ? `Мат в ${moves} ходов` : `Мат через ${moves} ходов (для чёрных)`;
+                evaluation = match[1] > 0 
+                    ? `Мат белым в ${moves} ходов` 
+                    : `Мат чёрным в ${moves} ходов`;
             }
         }
-        
-        // Обрабатываем лучший ход
+        // Лучший ход
         else if (data.startsWith('bestmove')) {
-            const bestMove = data.split(' ')[1];
+            bestMove = data.split(' ')[1];
             
             if (bestMove && bestMove !== '(none)') {
-                // Показываем результат без автоматического хода
                 resultDiv.innerHTML = `
                     <p>Лучший ход: <strong>${bestMove}</strong></p>
                     <p>Оценка позиции: ${evaluation}</p>
@@ -79,8 +79,9 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
         }
     };
     
-    // Отправляем команды Stockfish
+    // Последовательность команд для Stockfish
     stockfish.postMessage('uci');
+    stockfish.postMessage('isready');
     stockfish.postMessage(`position fen ${game.fen()}`);
     stockfish.postMessage('go depth 14');
 });
@@ -96,22 +97,29 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 document.getElementById('theme-btn').addEventListener('click', () => {
     document.body.classList.toggle('dark');
     const themeBtn = document.getElementById('theme-btn');
-    
-    // Обновляем текст кнопки
     themeBtn.textContent = document.body.classList.contains('dark') 
         ? '☀️ Включить светлую тему' 
         : '🌙 Включить тёмную тему';
     
-    // Принудительно обновляем отображение доски
+    // Принудительно обновляем доску
     board.position(game.fen());
 });
 
 // Обновление статуса игры
 function updateStatus() {
+    const resultDiv = document.getElementById('result');
+    
     if (game.in_checkmate()) {
-        document.getElementById('result').innerHTML = '<p class="checkmate">Шах и мат!</p>';
+        resultDiv.innerHTML = '<p class="checkmate">Шах и мат!</p>';
+    } else if (game.in_draw()) {
+        resultDiv.innerHTML = '<p class="draw">Ничья!</p>';
+    } else if (game.in_check()) {
+        resultDiv.innerHTML = '<p class="check">Шах!</p>';
     }
-    if (game.in_draw()) {
-        document.getElementById('result').innerHTML = '<p class="draw">Ничья!</p>';
-    }
+}
+
+// Инициализация темы при загрузке
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.body.classList.add('dark');
+    document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
 }
