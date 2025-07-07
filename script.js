@@ -3,7 +3,7 @@ const board = Chessboard('board', {
     position: 'start',
     draggable: true,
     onDrop: handleMove,
-    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    pieceTheme: 'images'
 });
 
 const game = new Chess();
