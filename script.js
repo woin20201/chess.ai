@@ -3,7 +3,7 @@ const board = Chessboard('board', {
     position: 'start',
     draggable: true,
     onDrop: handleMove,
-    pieceTheme: 'images'
+    pieceTheme: 'pieceTheme: '/images/pieces/{piece}.png'  // если папка /images/ в корне'
 });
 
 const game = new Chess();
