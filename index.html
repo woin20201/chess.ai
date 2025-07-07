@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Шахматный AI</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шахматный AI</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -14,7 +15,7 @@
             <button id="theme-btn">🌙 Включить тёмную тему</button>
         </div>
         
-        <div id="board" style="width: 400px; margin: 20px auto;"></div>
+        <div id="board"></div>
         
         <div class="controls">
             <button id="analyze-btn">Анализировать позицию</button>
@@ -27,38 +28,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
-    <script>
-        // Встраиваем Stockfish прямо в HTML чтобы избежать проблем с CDN
-        function loadStockfish() {
-            return new Promise((resolve) => {
-                const worker = new Worker(URL.createObjectURL(new Blob([`
-                    self.importScripts('https://cdn.jsdelivr.net/npm/stockfish.js@17.1/stockfish.js');
-                    self.importScripts('https://cdn.jsdelivr.net/npm/stockfish.js@17.1/stockfish.wasm.js');
-                    
-                    self.onmessage = (e) => {
-                        if (e.data === 'init') {
-                            Stockfish().then((sf) => {
-                                self.sf = sf;
-                                self.sf.onmessage = (msg) => self.postMessage(msg.data);
-                                self.postMessage('ready');
-                            });
-                        } else if (self.sf) {
-                            self.sf.postMessage(e.data);
-                        }
-                    };
-                `], { type: 'text/javascript' })));
-                
-                worker.postMessage('init');
-                worker.onmessage = (e) => {
-                    if (e.data === 'ready') resolve(worker);
-                    else if (typeof worker.onData === 'function') worker.onData(e);
-                };
-                
-                worker.onData = null;
-                resolve(worker);
-            });
-        }
-    </script>
+    
+    <!-- Stockfish из репозитория -->
+    <script src="https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/src/stockfish.js"></script>
+    
     <script src="script.js"></script>
 </body>
 </html>
