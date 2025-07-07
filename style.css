@@ -1,8 +1,11 @@
+/* Светлая тема (по умолчанию) */
 body {
     font-family: Arial, sans-serif;
     background: #f5f5f5;
+    color: #333;
     margin: 0;
     padding: 20px;
+    transition: all 0.3s ease;
 }
 
 .container {
@@ -12,10 +15,20 @@ body {
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
 }
 
 #board {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    width: 400px;
+    margin: 20px auto;
+    transition: all 0.3s ease;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
 }
 
 button {
@@ -25,45 +38,39 @@ button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin: 5px;
+    font-size: 16px;
+    transition: all 0.3s ease;
 }
 
 button:hover {
     background: #45a049;
 }
+
+.theme-control {
+    text-align: center;
+    margin: 20px 0;
+}
+
 /* Тёмная тема */
-body.dark-theme {
-    background: #1a1a1a;
+body.dark {
+    background: #121212;
     color: #e0e0e0;
 }
 
-body.dark-theme .container {
-    background: #2d2d2d;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+body.dark .container {
+    background: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-body.dark-theme button {
-    background: #444;
+body.dark button {
+    background: #333;
     color: #fff;
 }
 
-/* Инвертируем цвета доски только в тёмной теме */
-body.dark-theme .chessboard {
-    filter: invert(0.85) hue-rotate(180deg);
+body.dark button:hover {
+    background: #444;
 }
 
-/* Стиль переключателя */
-.theme-switcher {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-#theme-btn {
-    background: #4CAF50;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
+body.dark #board {
+    filter: invert(0.9) hue-rotate(180deg);
 }
