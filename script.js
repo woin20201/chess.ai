@@ -19,8 +19,8 @@ function handleMove(source, target) {
     updateStatus();
 }
 
-// Анализ позиции с Stockfish
-document.getElementById('analyze-btn').addEventListener('click', () => {
+// Анализ позиции с локальным Stockfish
+document.getElementById('analyze-btn').addEventListener('click', async () => {
     if (game.game_over()) {
         showResult('Игра окончена! Начните новую.', 'error');
         return;
@@ -29,8 +29,8 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
     showResult('Анализ Stockfish... (10-20 секунд)', 'info');
     
     try {
-        // Создаем новый экземпляр Stockfish
-        const stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/src/stockfish.js');
+        // Инициализация Stockfish
+        const stockfish = await Stockfish();
         let evaluation = "0.0";
         let bestMove = null;
         let isAnalysisComplete = false;
@@ -43,7 +43,8 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
             }
         }, 30000);
         
-        stockfish.onmessage = function(event) {
+        // Обработчик сообщений от Stockfish
+        stockfish.onmessage = (event) => {
             const data = event.data;
             
             // Парсим оценку позиции
@@ -95,10 +96,10 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
         stockfish.postMessage('uci');
         stockfish.postMessage('isready');
         stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage('go depth 14');
+        stockfish.postMessage('go depth 16');
         
     } catch (error) {
-        showResult('Ошибка загрузки Stockfish. Обновите страницу.', 'error');
+        showResult(`Ошибка загрузки Stockfish: ${error.message}`, 'error');
         console.error('Stockfish error:', error);
     }
 });
@@ -168,9 +169,9 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
     }
     
-    // Проверка поддержки Web Workers
-    if (!window.Worker) {
-        showResult('Ваш браузер не поддерживает Web Workers. Обновите браузер.', 'error');
+    // Проверка поддержки WebAssembly
+    if (!WebAssembly) {
+        showResult('Ваш браузер не поддерживает WebAssembly. Обновите браузер.', 'error');
         document.getElementById('analyze-btn').disabled = true;
     }
 });
