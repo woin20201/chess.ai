@@ -1,11 +1,10 @@
-/* Светлая тема (по умолчанию) */
 body {
     font-family: Arial, sans-serif;
     background: #f5f5f5;
     color: #333;
     margin: 0;
     padding: 20px;
-    transition: all 0.3s ease;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -21,7 +20,6 @@ body {
 #board {
     width: 400px;
     margin: 20px auto;
-    transition: all 0.3s ease;
 }
 
 .controls {
@@ -71,18 +69,22 @@ body.dark button:hover {
     background: #444;
 }
 
-/* Фикс для тёмной темы - только инвертируем фон доски */
-body.dark .board-b72b1 {
-    background-color: #b58863 !important;
-    filter: invert(1) hue-rotate(180deg);
+/* ФИКС ЦВЕТОВ ФИГУР В ТЁМНОЙ ТЕМЕ */
+body.dark #board .white-1e1d7 {
+    filter: invert(0.9) hue-rotate(180deg) brightness(1.2);
 }
 
-/* Фигуры остаются без изменений */
-body.dark .piece-417db {
-    filter: none !important;
+body.dark #board .black-3c85d {
+    filter: invert(0.9) hue-rotate(180deg) brightness(0.8);
 }
 
-/* Специальные классы для сообщений */
+/* Сообщения */
+#result {
+    text-align: center;
+    min-height: 60px;
+    margin-top: 20px;
+}
+
 .checkmate {
     color: #e74c3c;
     font-weight: bold;
