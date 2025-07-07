@@ -20,7 +20,7 @@ function handleMove(source, target) {
 }
 
 // Анализ позиции с Stockfish
-document.getElementById('analyze-btn').addEventListener('click', async () => {
+document.getElementById('analyze-btn').addEventListener('click', () => {
     if (game.game_over()) {
         showResult('Игра окончена! Начните новую.', 'error');
         return;
@@ -29,10 +29,7 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
     showResult('Анализ Stockfish... (10-20 секунд)', 'info');
     
     try {
-        // Загружаем Stockfish динамически
-        const { Stockfish } = await import('https://cdn.jsdelivr.net/npm/stockfish.js@10/stockfish.min.js');
-        const stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10/stockfish.min.js');
-        
+        const stockfish = new Worker('https://unpkg.com/stockfish.js@14.1.0/stockfish.js');
         let evaluation = "0.0";
         let bestMove = null;
         let isAnalysisComplete = false;
@@ -47,7 +44,6 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         stockfish.onmessage = function(event) {
             const data = event.data;
             
-            // Парсим оценку позиции
             if (data.includes('score cp')) {
                 const match = data.match(/score cp (-?\d+)/);
                 if (match) {
@@ -55,7 +51,6 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
                     evaluation = score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1);
                 }
             }
-            // Обработка мата
             else if (data.includes('score mate')) {
                 const match = data.match(/score mate (-?\d+)/);
                 if (match) {
@@ -65,7 +60,6 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
                         : `Мат чёрным в ${moves} ходов`;
                 }
             }
-            // Лучший ход
             else if (data.startsWith('bestmove')) {
                 isAnalysisComplete = true;
                 clearTimeout(analysisTimer);
@@ -82,8 +76,7 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
                     document.getElementById('apply-move-btn').addEventListener('click', () => {
                         game.move({
                             from: bestMove.substring(0, 2),
-                            to: bestMove.substring(2, 4),
-                            promotion: 'q'
+                            to: bestMove.substring(2, 4)
                         });
                         board.position(game.fen());
                         updateStatus();
@@ -96,14 +89,13 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
             }
         };
         
-        // Последовательность команд для Stockfish
         stockfish.postMessage('uci');
         stockfish.postMessage('isready');
         stockfish.postMessage(`position fen ${game.fen()}`);
         stockfish.postMessage('go depth 16');
         
     } catch (error) {
-        showResult(`Ошибка загрузки Stockfish: ${error.message}`, 'error');
+        showResult(`Ошибка: ${error.message}`, 'error');
         console.error('Stockfish error:', error);
     }
 });
