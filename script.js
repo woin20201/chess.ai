@@ -1,67 +1,115 @@
-// Инициализация доски
+// Инициализация
 const board = Chessboard('board', {
     position: 'start',
-    draggable: true
+    draggable: true,
+    onDrop: handleMove,
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
 });
 
 const game = new Chess();
+let stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10/stockfish.js');
 
-// Анализ позиции с помощью Stockfish
-document.getElementById('analyze-btn').addEventListener('click', () => {
-    const stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10/stockfish.js');
-    
-    stockfish.onmessage = (e) => {
-        if (e.data.startsWith('bestmove')) {
-            const move = e.data.split(' ')[1];
-            game.move(move);
-            board.position(game.fen());
-            document.getElementById('result').innerHTML = `
-                <p>Лучший ход: <strong>${move}</strong></p>
-                <p>Нотация: ${game.history()[game.history().length-1]}</p>
-            `;
-            stockfish.terminate();
-        }
-    };
+// Обработка ходов
+function handleMove(source, target) {
+    const move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q' // Автоматическое превращение в ферзя
+    });
+
+    if (move === null) return 'snapback';
+    updateStatus();
+}
+
+// Анализ позиции
+document.getElementById('analyze-btn').addEventListener('click', async () => {
+    if (game.game_over()) {
+        alert('Игра окончена! Начните новую.');
+        return;
+    }
+
+    document.getElementById('result').innerHTML = '<p>Анализ...</p>';
     
     stockfish.postMessage(`position fen ${game.fen()}`);
     stockfish.postMessage('go depth 18');
 });
 
-// Сброс доски
+stockfish.onmessage = (e) => {
+    if (e.data.startsWith('bestmove')) {
+        const bestMove = e.data.split(' ')[1];
+        game.move(bestMove);
+        board.position(game.fen());
+        document.getElementById('result').innerHTML = `
+            <p>Лучший ход: <strong>${bestMove}</strong></p>
+            <p>Оценка: ${getEvaluation(e.data)}</p>
+        `;
+    }
+};
+
+// Функция для извлечения оценки из вывода Stockfish
+function getEvaluation(output) {
+    const score = output.match(/score cp (-?\d+)/);
+    if (score) {
+        const value = parseInt(score[1]) / 100;
+        return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
+    }
+    return "N/A";
+}
+
+// Анализ фото
+document.getElementById('analyze-photo-btn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('photo-upload');
+    if (!fileInput.files.length) {
+        alert('Загрузите фото доски!');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('photo-preview').innerHTML = `
+            <img src="${e.target.result}" alt="Загруженная доска">
+        `;
+
+        // Имитация API (замените на реальный запрос к ChessVision.ai)
+        setTimeout(() => {
+            const mockFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+            game.load(mockFEN);
+            board.position(mockFEN);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('result').innerHTML = `
+                <p>Распознанная позиция:</p>
+                <pre>${mockFEN}</pre>
+            `;
+        }, 2000);
+    };
+
+    reader.readAsDataURL(file);
+});
+
+// Сброс игры
 document.getElementById('reset-btn').addEventListener('click', () => {
     game.reset();
     board.start();
     document.getElementById('result').innerHTML = '';
-    document.getElementById('photo-preview').innerHTML = '';
 });
 
-// Анализ фото
-document.getElementById('analyze-photo-btn').addEventListener('click', () => {
-    const fileInput = document.getElementById('photo-upload');
-    if (fileInput.files.length === 0) return;
-    
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        // Показываем превью фото
-        document.getElementById('photo-preview').innerHTML = `
-            <img src="${e.target.result}" alt="Загруженная доска">
-            <p>Идет анализ...</p>
-        `;
-        
-        // Здесь будет подключение к API распознавания
-        setTimeout(() => {
-            // Временная заглушка - случайный ход
-            const moves = game.moves();
-            if (moves.length > 0) {
-                const randomMove = moves[Math.floor(Math.random() * moves.length)];
-                game.move(randomMove);
-                board.position(game.fen());
-                document.getElementById('photo-preview').innerHTML += `
-                    <p>AI рекомендует ход: <strong>${randomMove}</strong></p>
-                `;
-            }
+// Отмена хода
+document.getElementById('undo-btn').addEventListener('click', () => {
+    game.undo();
+    board.position(game.fen());
+});
+
+// Обновление статуса
+function updateStatus() {
+    if (game.in_checkmate()) {
+        alert('Шах и мат!');
+    } else if (game.in_draw()) {
+        alert('Ничья!');
+    }
+}
         }, 2000);
     };
     
