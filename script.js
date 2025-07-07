@@ -30,16 +30,14 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
     resultDiv.innerHTML = '<p>Анализ Stockfish 17.1... (это займёт 10-20 секунд)</p>';
     
     try {
-        // Создаем экземпляр Stockfish 17.1
-        const stockfish = await Stockfish();
+        const stockfish = await loadStockfish();
         let evaluation = "N/A";
         let bestMove = null;
         
         // Обработчик сообщений от Stockfish
-        stockfish.onmessage = (event) => {
+        stockfish.onData = (event) => {
             const data = event.data;
             
-            // Парсим оценку позиции
             if (data.includes('score cp')) {
                 const match = data.match(/score cp (-?\d+)/);
                 if (match) {
@@ -47,7 +45,6 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
                     evaluation = score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1);
                 }
             }
-            // Обработка мата
             else if (data.includes('score mate')) {
                 const match = data.match(/score mate (-?\d+)/);
                 if (match) {
@@ -57,7 +54,6 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
                         : `Мат чёрным в ${moves} ходов`;
                 }
             }
-            // Лучший ход
             else if (data.startsWith('bestmove')) {
                 bestMove = data.split(' ')[1];
                 
@@ -68,7 +64,6 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
                         <button id="apply-move-btn">Сделать этот ход</button>
                     `;
                     
-                    // Добавляем обработчик для применения хода
                     document.getElementById('apply-move-btn').addEventListener('click', () => {
                         game.move(bestMove);
                         board.position(game.fen());
@@ -83,13 +78,12 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         // Последовательность команд для Stockfish
         stockfish.postMessage('uci');
         stockfish.postMessage('setoption name Skill Level value 20');
-        stockfish.postMessage('setoption name Threads value 4');
         stockfish.postMessage('isready');
         stockfish.postMessage(`position fen ${game.fen()}`);
         stockfish.postMessage('go depth 16');
         
     } catch (error) {
-        resultDiv.innerHTML = '<p>Ошибка загрузки Stockfish. Попробуйте обновить страницу.</p>';
+        resultDiv.innerHTML = '<p>Ошибка: ' + error.message + '</p>';
         console.error('Stockfish error:', error);
     }
 });
@@ -101,21 +95,19 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     document.getElementById('result').innerHTML = '';
 });
 
-// Переключение темы
+// Переключение темы (исправленная версия)
 document.getElementById('theme-btn').addEventListener('click', () => {
     document.body.classList.toggle('dark');
     const themeBtn = document.getElementById('theme-btn');
     themeBtn.textContent = document.body.classList.contains('dark') 
         ? '☀️ Включить светлую тему' 
         : '🌙 Включить тёмную тему';
-    
-    // Принудительно обновляем доску
-    board.position(game.fen());
 });
 
 // Обновление статуса игры
 function updateStatus() {
     const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = '';
     
     if (game.in_checkmate()) {
         resultDiv.innerHTML = '<p class="checkmate">Шах и мат!</p>';
@@ -132,8 +124,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('dark');
         document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
     }
-});// Инициализация темы при загрузке
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.body.classList.add('dark');
-    document.getElementById('theme-btn').textContent = '☀️ Включить светлую тему';
-}
+    
+    // Принудительно обновляем доску после загрузки
+    setTimeout(() => board.position(game.fen()), 100);
+});
