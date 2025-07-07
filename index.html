@@ -5,36 +5,60 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <!-- Добавляем Stockfish WASM -->
-    <script src="https://cdn.jsdelivr.net/npm/stockfish.js@17.1/stockfish.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stockfish.js@17.1/stockfish.wasm.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>♟️ Шахматный AI</h1>
         
-        <!-- Кнопка переключения темы -->
         <div class="theme-control">
             <button id="theme-btn">🌙 Включить тёмную тему</button>
         </div>
         
-        <!-- Шахматная доска -->
         <div id="board" style="width: 400px; margin: 20px auto;"></div>
         
-        <!-- Кнопки управления -->
         <div class="controls">
             <button id="analyze-btn">Анализировать позицию</button>
             <button id="reset-btn">Сбросить доску</button>
         </div>
         
-        <!-- Блок с результатами -->
         <div id="result"></div>
     </div>
 
-    <!-- Подключаем библиотеки -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+    <script>
+        // Встраиваем Stockfish прямо в HTML чтобы избежать проблем с CDN
+        function loadStockfish() {
+            return new Promise((resolve) => {
+                const worker = new Worker(URL.createObjectURL(new Blob([`
+                    self.importScripts('https://cdn.jsdelivr.net/npm/stockfish.js@17.1/stockfish.js');
+                    self.importScripts('https://cdn.jsdelivr.net/npm/stockfish.js@17.1/stockfish.wasm.js');
+                    
+                    self.onmessage = (e) => {
+                        if (e.data === 'init') {
+                            Stockfish().then((sf) => {
+                                self.sf = sf;
+                                self.sf.onmessage = (msg) => self.postMessage(msg.data);
+                                self.postMessage('ready');
+                            });
+                        } else if (self.sf) {
+                            self.sf.postMessage(e.data);
+                        }
+                    };
+                `], { type: 'text/javascript' })));
+                
+                worker.postMessage('init');
+                worker.onmessage = (e) => {
+                    if (e.data === 'ready') resolve(worker);
+                    else if (typeof worker.onData === 'function') worker.onData(e);
+                };
+                
+                worker.onData = null;
+                resolve(worker);
+            });
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
