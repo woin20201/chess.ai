@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Шахматный AI с анализом по фото</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>♟️ Шахматный AI</h1>
+        
+        <div class="upload-section">
+            <input type="file" id="photo-upload" accept="image/*">
+            <button id="analyze-photo-btn">Анализировать фото</button>
+        </div>
+        
+        <div id="board"></div>
+        
+        <div class="controls">
+            <button id="analyze-btn">Анализировать позицию</button>
+            <button id="reset-btn">Сбросить доску</button>
+        </div>
+        
+        <div id="result"></div>
+        <div id="photo-preview"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
+
