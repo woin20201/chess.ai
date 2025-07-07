@@ -32,35 +32,38 @@ button:hover {
     background: #45a049;
 }
 /* Тёмная тема */
-body.dark {
-    background: #121212;
+body.dark-theme {
+    background: #1a1a1a;
     color: #e0e0e0;
 }
 
-body.dark .container {
-    background: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+body.dark-theme .container {
+    background: #2d2d2d;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
-body.dark button {
-    background: #333;
+body.dark-theme button {
+    background: #444;
     color: #fff;
 }
 
-body.dark #board {
-    filter: invert(0.9);
+/* Инвертируем цвета доски только в тёмной теме */
+body.dark-theme .chessboard {
+    filter: invert(0.85) hue-rotate(180deg);
 }
 
-/* Переключатель темы */
+/* Стиль переключателя */
 .theme-switcher {
     text-align: center;
-    margin: 15px 0;
+    margin-bottom: 20px;
 }
 
 #theme-btn {
-    background: #333;
+    background: #4CAF50;
     color: white;
+    padding: 8px 16px;
     border: none;
-    padding: 8px 15px;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
 }
