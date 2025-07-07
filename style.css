@@ -1,55 +1,81 @@
+/* Светлая тема */
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    font-family: 'Arial', sans-serif;
+    background: #f0f0f0;
     color: #333;
     margin: 0;
     padding: 20px;
-    transition: background 0.3s ease, color 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    transition: background 0.3s ease;
 }
 
 .container {
     background: white;
     max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
     padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    margin-top: 0;
+    color: #2c3e50;
 }
 
 #board {
     width: 400px;
+    height: 400px;
     margin: 20px auto;
 }
 
 .controls {
     display: flex;
-    gap: 10px;
     justify-content: center;
-    margin: 20px 0;
+    gap: 15px;
+    margin: 25px 0;
 }
 
 button {
-    padding: 10px 20px;
-    background: #4CAF50;
+    padding: 12px 25px;
+    background: #3498db;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
-    transition: all 0.3s ease;
+    font-weight: bold;
+    transition: background 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
-    background: #45a049;
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 .theme-control {
-    text-align: center;
     margin: 20px 0;
 }
 
-/* Тёмная тема */
+#result {
+    min-height: 60px;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    font-size: 18px;
+}
+
+/* Тёмная тема - меняет ТОЛЬКО фон */
 body.dark {
     background: #121212;
     color: #e0e0e0;
@@ -57,47 +83,43 @@ body.dark {
 
 body.dark .container {
     background: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-body.dark button {
-    background: #333;
-    color: #fff;
-}
-
-body.dark button:hover {
-    background: #444;
-}
-
-/* ФИКС ЦВЕТОВ ФИГУР В ТЁМНОЙ ТЕМЕ */
-body.dark #board .white-1e1d7 {
-    filter: invert(0.9) hue-rotate(180deg) brightness(1.2);
-}
-
-body.dark #board .black-3c85d {
-    filter: invert(0.9) hue-rotate(180deg) brightness(0.8);
+body.dark #result {
+    background: #2a2a2a;
 }
 
 /* Сообщения */
-#result {
-    text-align: center;
-    min-height: 60px;
-    margin-top: 20px;
-}
-
 .checkmate {
     color: #e74c3c;
     font-weight: bold;
-    font-size: 1.2em;
 }
 
 .draw {
     color: #f39c12;
     font-weight: bold;
-    font-size: 1.2em;
 }
 
 .check {
     color: #3498db;
     font-weight: bold;
+}
+
+/* Адаптивность */
+@media (max-width: 500px) {
+    #board {
+        width: 90vw;
+        height: 90vw;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    button {
+        width: 100%;
+        max-width: 300px;
+    }
 }
