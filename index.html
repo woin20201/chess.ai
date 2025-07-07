@@ -9,28 +9,29 @@
 <body>
     <div class="container">
         <h1>♟️ Шахматный AI</h1>
-        <div id="board" style="width: 400px; margin: 20px auto;"></div>
-        <div class="controls">
-            <button id="analyze-btn">Анализ</button>
-            <button id="reset-btn">Сброс</button>
+        
+        <!-- Кнопка переключения темы -->
+        <div class="theme-control">
+            <button id="theme-btn">🌙 Включить тёмную тему</button>
         </div>
+        
+        <!-- Шахматная доска -->
+        <div id="board" style="width: 400px; margin: 20px auto;"></div>
+        
+        <!-- Кнопки управления -->
+        <div class="controls">
+            <button id="analyze-btn">Анализировать позицию</button>
+            <button id="reset-btn">Сбросить доску</button>
+        </div>
+        
+        <!-- Блок с результатами -->
         <div id="result"></div>
     </div>
 
+    <!-- Подключаем библиотеки -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-<div class="container">
-    <h1>♟️ Шахматный AI</h1>
-    
-    <!-- Добавьте эту кнопку ПЕРЕД доской -->
-    <div class="theme-switcher">
-        <button id="theme-btn">🌙 Тёмная тема</button>
-    </div>
-    
-    <div id="board" style="width: 400px; margin: 20px auto;"></div>
-    <!-- Остальной код -->
-</div>
