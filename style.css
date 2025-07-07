@@ -1,9 +1,19 @@
-/* Добавляем важное правило для фильтра темной темы */
-body.dark #board img {
-    filter: invert(0.9) hue-rotate(180deg) !important;
+/* Убрать глобальную инверсию доски */
+body.dark #board {
+    filter: none !important;
 }
 
-/* Остальной CSS остается без изменений */
+/* Инвертировать только фон доски */
+body.dark .board-b72b1 {
+    filter: invert(0.9) hue-rotate(180deg);
+}
+
+/* Фигуры оставить без изменений */
+body.dark .piece-417db {
+    filter: none !important;
+}
+
+/* Остальные стили без изменений */
 body {
     font-family: Arial, sans-serif;
     background: #f5f5f5;
