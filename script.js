@@ -48,3 +48,9 @@ function extractEvaluation(output) {
     }
     return "N/A";
 }
+// Переключение темы
+document.getElementById('theme-btn').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const btn = document.getElementById('theme-btn');
+    btn.textContent = document.body.classList.contains('dark') ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+});
